@@ -1,64 +1,69 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
-import faker from '@faker-js/faker'
+import ReactDOM from 'react-dom/client'
+import { faker } from '@faker-js/faker'
 
 import './index.css'
 
 import {
+  ColumnDef,
   ColumnOrderState,
-  createTable,
+  flexRender,
   getCoreRowModel,
-  useTableInstance,
+  useReactTable,
   VisibilityState,
 } from '@tanstack/react-table'
 import { makeData, Person } from './makeData'
 
-let table = createTable().setRowType<Person>()
-
-const defaultColumns = [
-  table.createGroup({
+const defaultColumns: ColumnDef<Person>[] = [
+  {
     header: 'Name',
     footer: props => props.column.id,
     columns: [
-      table.createDataColumn('firstName', {
+      {
+        accessorKey: 'firstName',
         cell: info => info.getValue(),
         footer: props => props.column.id,
-      }),
-      table.createDataColumn(row => row.lastName, {
+      },
+      {
+        accessorFn: row => row.lastName,
         id: 'lastName',
         cell: info => info.getValue(),
         header: () => <span>Last Name</span>,
         footer: props => props.column.id,
-      }),
+      },
     ],
-  }),
-  table.createGroup({
+  },
+  {
     header: 'Info',
     footer: props => props.column.id,
     columns: [
-      table.createDataColumn('age', {
+      {
+        accessorKey: 'age',
         header: () => 'Age',
         footer: props => props.column.id,
-      }),
-      table.createGroup({
+      },
+      {
         header: 'More Info',
         columns: [
-          table.createDataColumn('visits', {
+          {
+            accessorKey: 'visits',
             header: () => <span>Visits</span>,
             footer: props => props.column.id,
-          }),
-          table.createDataColumn('status', {
+          },
+          {
+            accessorKey: 'status',
             header: 'Status',
             footer: props => props.column.id,
-          }),
-          table.createDataColumn('progress', {
+          },
+          {
+            accessorKey: 'progress',
             header: 'Profile Progress',
             footer: props => props.column.id,
-          }),
+          },
         ],
-      }),
+      },
     ],
-  }),
+  },
 ]
 
 function App() {
@@ -66,14 +71,14 @@ function App() {
   const [columns] = React.useState(() => [...defaultColumns])
 
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
+      React.useState<VisibilityState>({})
   const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
   const [columnPinning, setColumnPinning] = React.useState({})
 
   const [isSplit, setIsSplit] = React.useState(false)
   const rerender = () => setData(() => makeData(5000))
 
-  const instance = useTableInstance(table, {
+  const table = useReactTable({
     data,
     columns,
     state: {
@@ -91,272 +96,310 @@ function App() {
   })
 
   const randomizeColumns = () => {
-    instance.setColumnOrder(
-      faker.helpers.shuffle(instance.getAllLeafColumns().map(d => d.id))
+    table.setColumnOrder(
+        faker.helpers.shuffle(table.getAllLeafColumns().map(d => d.id))
     )
   }
 
   return (
-    <div className="p-2">
-      <div className="inline-block border border-black shadow rounded">
-        <div className="px-1 border-b border-black">
-          <label>
-            <input
-              {...{
-                type: 'checkbox',
-                checked: instance.getIsAllColumnsVisible(),
-                onChange: instance.getToggleAllColumnsVisibilityHandler(),
-              }}
-            />{' '}
-            Toggle All
-          </label>
-        </div>
-        {instance.getAllLeafColumns().map(column => {
-          return (
-            <div key={column.id} className="px-1">
-              <label>
-                <input
+      <div className="p-2">
+        <div className="inline-block border border-black shadow rounded">
+          <div className="px-1 border-b border-black">
+            <label>
+              <input
                   {...{
                     type: 'checkbox',
-                    checked: column.getIsVisible(),
-                    onChange: column.getToggleVisibilityHandler(),
+                    checked: table.getIsAllColumnsVisible(),
+                    onChange: table.getToggleAllColumnsVisibilityHandler(),
                   }}
-                />{' '}
-                {column.id}
-              </label>
-            </div>
-          )
-        })}
-      </div>
-      <div className="h-4" />
-      <div className="flex flex-wrap gap-2">
-        <button onClick={() => rerender()} className="border p-1">
-          Regenerate
-        </button>
-        <button onClick={() => randomizeColumns()} className="border p-1">
-          Shuffle Columns
-        </button>
-      </div>
-      <div className="h-4" />
-      <div>
-        <label>
-          <input
-            type="checkbox"
-            checked={isSplit}
-            onChange={e => setIsSplit(e.target.checked)}
-          />{' '}
-          Split Mode
-        </label>
-      </div>
-      <div className={`flex ${isSplit ? 'gap-4' : ''}`}>
-        {isSplit ? (
+              />{' '}
+              Toggle All
+            </label>
+          </div>
+          {table.getAllLeafColumns().map(column => {
+            return (
+                <div key={column.id} className="px-1">
+                  <label>
+                    <input
+                        {...{
+                          type: 'checkbox',
+                          checked: column.getIsVisible(),
+                          onChange: column.getToggleVisibilityHandler(),
+                        }}
+                    />{' '}
+                    {column.id}
+                  </label>
+                </div>
+            )
+          })}
+        </div>
+        <div className="h-4" />
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => rerender()} className="border p-1">
+            Regenerate
+          </button>
+          <button onClick={() => randomizeColumns()} className="border p-1">
+            Shuffle Columns
+          </button>
+        </div>
+        <div className="h-4" />
+        <div>
+          <label>
+            <input
+                type="checkbox"
+                checked={isSplit}
+                onChange={e => setIsSplit(e.target.checked)}
+            />{' '}
+            Split Mode
+          </label>
+        </div>
+        <div className={`flex ${isSplit ? 'gap-4' : ''}`}>
+          {isSplit ? (
+              <table className="border-2 border-black">
+                <thead>
+                {table.getLeftHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map(header => (
+                          <th key={header.id} colSpan={header.colSpan}>
+                            <div className="whitespace-nowrap">
+                              {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext()
+                                  )}
+                            </div>
+                            {!header.isPlaceholder && header.column.getCanPin() && (
+                                <div className="flex gap-1 justify-center">
+                                  {header.column.getIsPinned() !== 'left' ? (
+                                      <button
+                                          className="border rounded px-2"
+                                          onClick={() => {
+                                            header.column.pin('left')
+                                          }}
+                                      >
+                                        {'<='}
+                                      </button>
+                                  ) : null}
+                                  {header.column.getIsPinned() ? (
+                                      <button
+                                          className="border rounded px-2"
+                                          onClick={() => {
+                                            header.column.pin(false)
+                                          }}
+                                      >
+                                        X
+                                      </button>
+                                  ) : null}
+                                  {header.column.getIsPinned() !== 'right' ? (
+                                      <button
+                                          className="border rounded px-2"
+                                          onClick={() => {
+                                            header.column.pin('right')
+                                          }}
+                                      >
+                                        {'=>'}
+                                      </button>
+                                  ) : null}
+                                </div>
+                            )}
+                          </th>
+                      ))}
+                    </tr>
+                ))}
+                </thead>
+                <tbody>
+                {table
+                    .getRowModel()
+                    .rows.slice(0, 20)
+                    .map(row => {
+                      return (
+                          <tr key={row.id}>
+                            {row.getLeftVisibleCells().map(cell => {
+                              return (
+                                  <td key={cell.id}>
+                                    {flexRender(
+                                        cell.column.columnDef.cell,
+                                        cell.getContext()
+                                    )}
+                                  </td>
+                              )
+                            })}
+                          </tr>
+                      )
+                    })}
+                </tbody>
+              </table>
+          ) : null}
           <table className="border-2 border-black">
             <thead>
-            {instance.getLeftHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id} colSpan={header.colSpan}>
-                    <div className="whitespace-nowrap">
-                      {header.isPlaceholder ? null : header.renderHeader()}
-                    </div>
-                    {!header.isPlaceholder && header.column.getCanPin() && (
-                      <div className="flex gap-1 justify-center">
-                        {header.column.getIsPinned() !== 'left' ? (
-                          <button
-                            className="border rounded px-2"
-                            onClick={() => {
-                              header.column.pin('left')
-                            }}
-                          >
-                            {'<='}
-                          </button>
-                        ) : null}
-                        {header.column.getIsPinned() ? (
-                          <button
-                            className="border rounded px-2"
-                            onClick={() => {
-                              header.column.pin(false)
-                            }}
-                          >
-                            X
-                          </button>
-                        ) : null}
-                        {header.column.getIsPinned() !== 'right' ? (
-                          <button
-                            className="border rounded px-2"
-                            onClick={() => {
-                              header.column.pin('right')
-                            }}
-                          >
-                            {'=>'}
-                          </button>
-                        ) : null}
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-            </thead>
-            <tbody>
-            {instance
-              .getRowModel()
-              .rows.slice(0, 20)
-              .map(row => {
-                return (
-                  <tr key={row.id}>
-                    {row.getLeftVisibleCells().map(cell => {
-                      return <td key={cell.id}>{cell.renderCell()}</td>
-                    })}
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        ) : null}
-        <table className="border-2 border-black">
-          <thead>
-          {(isSplit
-              ? instance.getCenterHeaderGroups()
-              : instance.getHeaderGroups()
-          ).map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th key={header.id} colSpan={header.colSpan}>
-                  <div className="whitespace-nowrap">
-                    {header.isPlaceholder ? null : header.renderHeader()}
-                  </div>
-                  {!header.isPlaceholder && header.column.getCanPin() && (
-                    <div className="flex gap-1 justify-center">
-                      {header.column.getIsPinned() !== 'left' ? (
-                        <button
-                          className="border rounded px-2"
-                          onClick={() => {
-                            header.column.pin('left')
-                          }}
-                        >
-                          {'<='}
-                        </button>
-                      ) : null}
-                      {header.column.getIsPinned() ? (
-                        <button
-                          className="border rounded px-2"
-                          onClick={() => {
-                            header.column.pin(false)
-                          }}
-                        >
-                          X
-                        </button>
-                      ) : null}
-                      {header.column.getIsPinned() !== 'right' ? (
-                        <button
-                          className="border rounded px-2"
-                          onClick={() => {
-                            header.column.pin('right')
-                          }}
-                        >
-                          {'=>'}
-                        </button>
-                      ) : null}
-                    </div>
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-          </thead>
-          <tbody>
-          {instance
-            .getRowModel()
-            .rows.slice(0, 20)
-            .map(row => {
-              return (
-                <tr key={row.id}>
-                  {(isSplit
-                      ? row.getCenterVisibleCells()
-                      : row.getVisibleCells()
-                  ).map(cell => {
-                    return <td key={cell.id}>{cell.renderCell()}</td>
-                  })}
+            {(isSplit
+                    ? table.getCenterHeaderGroups()
+                    : table.getHeaderGroups()
+            ).map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                      <th key={header.id} colSpan={header.colSpan}>
+                        <div className="whitespace-nowrap">
+                          {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                              )}
+                        </div>
+                        {!header.isPlaceholder && header.column.getCanPin() && (
+                            <div className="flex gap-1 justify-center">
+                              {header.column.getIsPinned() !== 'left' ? (
+                                  <button
+                                      className="border rounded px-2"
+                                      onClick={() => {
+                                        header.column.pin('left')
+                                      }}
+                                  >
+                                    {'<='}
+                                  </button>
+                              ) : null}
+                              {header.column.getIsPinned() ? (
+                                  <button
+                                      className="border rounded px-2"
+                                      onClick={() => {
+                                        header.column.pin(false)
+                                      }}
+                                  >
+                                    X
+                                  </button>
+                              ) : null}
+                              {header.column.getIsPinned() !== 'right' ? (
+                                  <button
+                                      className="border rounded px-2"
+                                      onClick={() => {
+                                        header.column.pin('right')
+                                      }}
+                                  >
+                                    {'=>'}
+                                  </button>
+                              ) : null}
+                            </div>
+                        )}
+                      </th>
+                  ))}
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        {isSplit ? (
-          <table className="border-2 border-black">
-            <thead>
-            {instance.getRightHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id} colSpan={header.colSpan}>
-                    <div className="whitespace-nowrap">
-                      {header.isPlaceholder ? null : header.renderHeader()}
-                    </div>
-                    {!header.isPlaceholder && header.column.getCanPin() && (
-                      <div className="flex gap-1 justify-center">
-                        {header.column.getIsPinned() !== 'left' ? (
-                          <button
-                            className="border rounded px-2"
-                            onClick={() => {
-                              header.column.pin('left')
-                            }}
-                          >
-                            {'<='}
-                          </button>
-                        ) : null}
-                        {header.column.getIsPinned() ? (
-                          <button
-                            className="border rounded px-2"
-                            onClick={() => {
-                              header.column.pin(false)
-                            }}
-                          >
-                            X
-                          </button>
-                        ) : null}
-                        {header.column.getIsPinned() !== 'right' ? (
-                          <button
-                            className="border rounded px-2"
-                            onClick={() => {
-                              header.column.pin('right')
-                            }}
-                          >
-                            {'=>'}
-                          </button>
-                        ) : null}
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
             ))}
             </thead>
             <tbody>
-            {instance
-              .getRowModel()
-              .rows.slice(0, 20)
-              .map(row => {
-                return (
-                  <tr key={row.id}>
-                    {row.getRightVisibleCells().map(cell => {
-                      return <td key={cell.id}>{cell.renderCell()}</td>
-                    })}
-                  </tr>
-                )
-              })}
+            {table
+                .getRowModel()
+                .rows.slice(0, 20)
+                .map(row => {
+                  return (
+                      <tr key={row.id}>
+                        {(isSplit
+                                ? row.getCenterVisibleCells()
+                                : row.getVisibleCells()
+                        ).map(cell => {
+                          return (
+                              <td key={cell.id}>
+                                {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                )}
+                              </td>
+                          )
+                        })}
+                      </tr>
+                  )
+                })}
             </tbody>
           </table>
-        ) : null}
+          {isSplit ? (
+              <table className="border-2 border-black">
+                <thead>
+                {table.getRightHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map(header => (
+                          <th key={header.id} colSpan={header.colSpan}>
+                            <div className="whitespace-nowrap">
+                              {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext()
+                                  )}
+                            </div>
+                            {!header.isPlaceholder && header.column.getCanPin() && (
+                                <div className="flex gap-1 justify-center">
+                                  {header.column.getIsPinned() !== 'left' ? (
+                                      <button
+                                          className="border rounded px-2"
+                                          onClick={() => {
+                                            header.column.pin('left')
+                                          }}
+                                      >
+                                        {'<='}
+                                      </button>
+                                  ) : null}
+                                  {header.column.getIsPinned() ? (
+                                      <button
+                                          className="border rounded px-2"
+                                          onClick={() => {
+                                            header.column.pin(false)
+                                          }}
+                                      >
+                                        X
+                                      </button>
+                                  ) : null}
+                                  {header.column.getIsPinned() !== 'right' ? (
+                                      <button
+                                          className="border rounded px-2"
+                                          onClick={() => {
+                                            header.column.pin('right')
+                                          }}
+                                      >
+                                        {'=>'}
+                                      </button>
+                                  ) : null}
+                                </div>
+                            )}
+                          </th>
+                      ))}
+                    </tr>
+                ))}
+                </thead>
+                <tbody>
+                {table
+                    .getRowModel()
+                    .rows.slice(0, 20)
+                    .map(row => {
+                      return (
+                          <tr key={row.id}>
+                            {row.getRightVisibleCells().map(cell => {
+                              return (
+                                  <td key={cell.id}>
+                                    {flexRender(
+                                        cell.column.columnDef.cell,
+                                        cell.getContext()
+                                    )}
+                                  </td>
+                              )
+                            })}
+                          </tr>
+                      )
+                    })}
+                </tbody>
+              </table>
+          ) : null}
+        </div>
+        <pre>{JSON.stringify(table.getState().columnPinning, null, 2)}</pre>
       </div>
-      <pre>{JSON.stringify(instance.getState().columnPinning, null, 2)}</pre>
-    </div>
   )
 }
 
-ReactDOM.render(
-  // <React.StrictMode>
-  <App />,
-  // </React.StrictMode>,
-  document.getElementById('root')
+const rootElement = document.getElementById('root')
+if (!rootElement) throw new Error('Failed to find the root element')
+
+ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
 )
